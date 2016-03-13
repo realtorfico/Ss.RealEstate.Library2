@@ -1,6 +1,11 @@
 ﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Ss.RealEstate.Model;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Net;
 
 namespace Ss.RealEstate.Library2
 {
@@ -39,11 +44,94 @@ namespace Ss.RealEstate.Library2
             return addressList;
         }
 
-        internal static PropertyInfo GetPropertyInfo(AddressInfo address)
+        public static List<AddressInfo> GetAddressList(string cityOrZip, uint minPrice, uint maxPrice, uint minYearBuilt, uint maxYearBuilt, out bool isPaginated)
         {
-            var url = GetUrl(string.Format("{0}", address.FullAddress), true);
+            HtmlWeb web1 = new HtmlWeb();
+            string northeastlng = string.Empty;
+            string northeastlat = string.Empty;
+            string southeastlng = string.Empty;
+            string southeastlat = string.Empty;
+
+            using (WebClient wc1 = new WebClient())
+            {
+                var json1 = wc1.DownloadString("http://maps.googleapis.com/maps/api/geocode/json?address=" + cityOrZip);
+                JObject json11 = JObject.Parse(json1);
+                dynamic dynJson1 = JsonConvert.DeserializeObject(json11.ToString());
+                int inc1 = 0;
+                foreach (var item in dynJson1["results"][0]["geometry"]["bounds"])
+                {
+                    if (inc1 == 0)
+                    {
+                        northeastlng = Convert.ToString(item.Value["lng"].Value);
+                        northeastlat = Convert.ToString(item.Value["lat"].Value);
+                        northeastlat = northeastlat.Substring(0, northeastlat.Length - 1);
+
+                    }
+                    if (inc1 == 1)
+                    {
+                        southeastlng = Convert.ToString(item.Value["lng"]);
+                        southeastlat = Convert.ToString(item.Value["lat"]);
+                        southeastlat = southeastlat.Substring(0, southeastlat.Length - 1);
+                    }
+                    inc1++;
+                }
+            }
+            //string googleapicoordinates = northeastlng.Replace(".", "") + "," + northeastlat.Replace(".", "") + "," + southeastlng.Replace(".", "") + "," + southeastlat.Replace(".", "");
+            string googleapicoordinates = southeastlng.Replace(".", "") + "," + southeastlat.Replace(".", "") + "," + northeastlng.Replace(".", "") + "," + northeastlat.Replace(".", "");
+
+            var addressList = new List<AddressInfo>();
+            HtmlWeb web = new HtmlWeb();
+            using (WebClient wc = new WebClient())
+            {
+                //var criteriaUrlPortion = Constants.CriteriaUrlPortion
+                //                                    .Replace("{CityOrZip}", cityOrZip)
+                //                                    .Replace("{MinPrice}", minPrice)
+                //                                    .Replace("{MaxPrice}", maxPrice)
+                //                                    .Replace("{MinYearBuilt}", minYearBuilt)
+                //                                    .Replace("{MaxYearBuilt}", maxYearBuilt);
+
+                var json = wc.DownloadString(Constants.BaseUrl1.Replace("{googleapicoordinates}", googleapicoordinates));
+                JObject json1 = JObject.Parse(json);
+                dynamic dynJson = JsonConvert.DeserializeObject(json1.ToString());
+                int inc = 0;
+                foreach (var item in dynJson)
+                {
+                    if (inc == 1)
+                    {
+                        //if (item.Value == "" || item.Value == null)
+                        //    return addressList;
+
+                        for (int j = 0; j <= item.Value["properties"].Count - 1; j++)
+                        {
+                            var address = new AddressInfo();
+                            address.DetailsLink = "";
+                            address.FullAddress = item.Value["properties"][j][0];
+                            addressList.Add(address);
+                        }
+                    }
+                    inc++;
+                }
+            }
+
+            //TODO 
+            isPaginated = true;
+
+            return addressList.Take(30).ToList();
+        }
+
+        internal static PropertyInfo GetPropertyInfo(AddressInfo address, bool usePropertyIdForUrl)
+        {
+            var url = GetUrl(string.Format("{0}", address.FullAddress), usePropertyIdForUrl);
+
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(url);
+
+            //json call
+            var addressNode = doc.DocumentNode.SelectNodes(Constants.XPathForFullAddress);
+            if (addressNode != null && addressNode.Count > 0)
+            {
+                address.FullAddress = addressNode[0].InnerText.Trim();
+            }
 
             //Get Zestimate and ZRent
             string zestimateStr = string.Empty, zRentStr = string.Empty;
@@ -155,15 +243,15 @@ namespace Ss.RealEstate.Library2
                 ZRent = Utility.GetUnsignedIntFromString(zRentStr),
                 ZAmount = Utility.GetUnsignedIntFromString(zestimateStr),
                 HomeDetailsLink = address.DetailsLink,
-                Address = new AddressInfo() { FullAddress = address.FullAddress, City = city, Zip = address.FullAddress.Substring(address.FullAddress.Length - 5) }
+                Address = new AddressInfo() { FullAddress = address.FullAddress, City = city, Zip = address.FullAddress.Trim().Substring(address.FullAddress.Trim().Length - 5) }
             };
 
             return prpInfo;
         }
 
-        internal static string GetUrl(string portion, bool isPropertyAddress)
+        internal static string GetUrl(string portion, bool usePropertyIdForUrl)
         {
-            return Constants.BaseUrl + ((isPropertyAddress) ? portion.Replace(" ", "+") + "_rb" : portion + "_zpid");
+            return Constants.BaseUrl + (!usePropertyIdForUrl ? portion.Replace(" ", "+") + "_rb" : portion + "_zpid");
         }
     }
 }

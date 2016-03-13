@@ -10,14 +10,14 @@ namespace Ss.RealEstate.Library2
         private Dictionary<string, double> _zipCodeDict = new Dictionary<string, double>();
 
         #region Public Methods
-        public List<PropertyInfo> GetBasicScore(List<AddressInfo> addressList)
-        {
-            return addressList.Select(GetBasicScore).ToList();
-        }
+        //public List<PropertyInfo> GetBasicScore(List<AddressInfo> addressList, bool useFullAddressForUrl)
+        //{
+        //    return addressList.Select(GetBasicScore).ToList();
+        //}
 
-        public PropertyInfo GetBasicScore(AddressInfo address)
+        public PropertyInfo GetBasicScore(AddressInfo address, bool usePropertyIdForUrl)
         {
-            var prpInfo = CrawlerForProperty.GetPropertyInfo(address);
+            var prpInfo = CrawlerForProperty.GetPropertyInfo(address, usePropertyIdForUrl);
 
             if (prpInfo.ZAmount <= 0 || prpInfo.ListedPrice <= 0 || prpInfo.ZRent <= 0 || prpInfo.ZRent > prpInfo.ZAmount || 
                     prpInfo.ZRent > prpInfo.ListedPrice || (prpInfo.HomeType.ToLower() == "c" && prpInfo.Hoa == 0) || 
