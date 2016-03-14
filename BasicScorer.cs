@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Ss.RealEstate.Model;
 
 namespace Ss.RealEstate.Library2
@@ -10,18 +9,15 @@ namespace Ss.RealEstate.Library2
         private Dictionary<string, double> _zipCodeDict = new Dictionary<string, double>();
 
         #region Public Methods
-        //public List<PropertyInfo> GetBasicScore(List<AddressInfo> addressList, bool useFullAddressForUrl)
-        //{
-        //    return addressList.Select(GetBasicScore).ToList();
-        //}
-
         public PropertyInfo GetBasicScore(AddressInfo address, bool usePropertyIdForUrl)
         {
             var prpInfo = CrawlerForProperty.GetPropertyInfo(address, usePropertyIdForUrl);
 
             if (prpInfo.ZAmount <= 0 || prpInfo.ListedPrice <= 0 || prpInfo.ZRent <= 0 || prpInfo.ZRent > prpInfo.ZAmount || 
-                    prpInfo.ZRent > prpInfo.ListedPrice || (prpInfo.HomeType.ToLower() == "c" && prpInfo.Hoa == 0) || 
-                    prpInfo.SaleType.Trim().ToLower() == "auction" || prpInfo.SaleType.Trim().ToLower() == "coming soon") return prpInfo;
+                    prpInfo.ZRent > prpInfo.ListedPrice || (prpInfo.HomeType.Trim().ToLower() == "c" && prpInfo.Hoa == 0) || 
+                    prpInfo.SaleType.Trim().ToLower() == "auction" || prpInfo.SaleType.Trim().ToLower() == "coming soon" ||     //Do not calculate score if this is 'aution' or 'coming soon'
+                    prpInfo.Address.FullAddress.Trim().ToLower().Contains("spc"))        //Do not calculate score if this is 'mobile home'
+                return prpInfo;
 
             //Now calculate the score because all needed information is available
             var first = (prpInfo.ListedPrice * 100) / Convert.ToUInt32(prpInfo.ZAmount);   //This could range between 50 thru 200, mostly hovering around 100
@@ -71,6 +67,11 @@ namespace Ss.RealEstate.Library2
         {
             return _zipCodeDict;
         }
+
+        //public List<PropertyInfo> GetBasicScore(List<AddressInfo> addressList, bool useFullAddressForUrl)
+        //{
+        //    return addressList.Select(GetBasicScore).ToList();
+        //}
         #endregion
     }
 }

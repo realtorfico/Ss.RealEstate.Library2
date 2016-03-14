@@ -11,6 +11,7 @@ namespace Ss.RealEstate.Library2
 {
     public class CrawlerForProperty
     {
+        //This is called if we want to get the addresses via the html way
         public static List<AddressInfo> GetAddresses(string cityOrZip, uint minPrice, uint maxPrice, uint minYearBuilt, uint maxYearBuilt, out bool isPaginated)
         {
             var addressList = new List<AddressInfo>();
@@ -43,7 +44,8 @@ namespace Ss.RealEstate.Library2
 
             return addressList;
         }
-
+        
+        //This is called if we want to get addresses via the JSON way
         public static List<AddressInfo> GetAddressList(string cityOrZip, uint minPrice, uint maxPrice, uint minYearBuilt, uint maxYearBuilt, out bool isPaginated)
         {
             HtmlWeb web1 = new HtmlWeb();
