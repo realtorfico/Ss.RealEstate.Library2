@@ -6,9 +6,6 @@ namespace Ss.RealEstate.Library2
 {
     public class SmtpMailer
     {
-        const string _gmailUser = "avangari@gmail.com";
-        const string _gmailPwd = "Chittu14#"; 
-
         public static void SendMail(string from, string[] to, string subject, string body)
         {
             if (string.IsNullOrEmpty(from) || to.Length <= 0 || string.IsNullOrEmpty(subject) || string.IsNullOrEmpty(body)) return; 
@@ -28,7 +25,7 @@ namespace Ss.RealEstate.Library2
                 EnableSsl = true,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(_gmailUser, _gmailPwd),
+                //Credentials = new NetworkCredential(_gmailUser, _gmailPwd),
                 Timeout = 20000
             };
 

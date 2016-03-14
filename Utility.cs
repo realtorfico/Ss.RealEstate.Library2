@@ -42,7 +42,7 @@ namespace Ss.RealEstate.Library2
                 }
             }
 
-            return Convert.ToDouble(valueStr);
+            return string.IsNullOrEmpty(valueStr) ? 0.0 : Convert.ToDouble(valueStr);
         }
 
         static public string CurrentAssemblyDirectory()
